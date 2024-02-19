@@ -1,0 +1,57 @@
+version: "3.8"
+services:     
+  pgadmin:
+    image: dpage/pgadmin4
+    environment: 
+      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
+      - PGADMIN_DEFAULT_PASSWORD=admin1234
+    ports:
+      - '5050:80'
+    restart: always
+    volumes: 
+      - ./pgadmin:/root/.pgadmin
+    depends_on:
+      - database
+    links:
+     - database
+    networks:
+     - etl_network
+
+  database:
+    image: "postgres:13"
+    container_name: database
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_DB: "rickmorty"
+      POSTGRES_HOST: "database"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "postgres"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-U",
+          "postgres",
+          "-d",
+          "rickmorty"
+        ]
+      interval: 5s
+      retries: 5
+    restart: always
+    volumes:
+      - /tmp/pg-data/:/var/lib/postgresql/data/
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - etl_network
+
+volumes:
+  dbdata: null
+
+
+networks:
+  etl_network: null
